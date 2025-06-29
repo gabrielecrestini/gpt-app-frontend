@@ -1,11 +1,16 @@
 // src/lib/firebase.ts
 
-// Import delle funzioni necessarie da Firebase SDK
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { 
+  getAuth, 
+  signInWithPopup, 
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile // <-- Importa updateProfile
+} from "firebase/auth";
 
-// La tua configurazione Firebase personale
-// Ho corretto "firebasestorage.app" in "appspot.com" nel storageBucket, che è il formato corretto.
 const firebaseConfig = {
   apiKey: "AIzaSyCTyCLQGZcT-5lHSMltRevJesnYfO5_EEw",
   authDomain: "cashhh-52f38.firebaseapp.com",
@@ -16,13 +21,27 @@ const firebaseConfig = {
   measurementId: "G-3F02RQXEFQ"
 };
 
-// Inizializzazione di Firebase in modo sicuro per Next.js
-// Questo codice controlla se un'app Firebase è già stata inizializzata.
-// Se non lo è, la inizializza. Se lo è già, usa l'app esistente.
-// Questo previene errori durante lo sviluppo quando la pagina si ricarica.
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
-// Esporta l'oggetto 'auth' che verrà usato in tutta l'applicazione per gestire il login.
 const auth = getAuth(app);
 
-export { app, auth };
+// Funzione di login con Google
+export const signInWithGoogle = async () => {
+  const provider = new GoogleAuthProvider();
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (error) {
+    console.error("Errore durante il login con Google", error);
+    // Potresti voler restituire l'errore per mostrarlo nell'UI
+    throw error;
+  }
+};
+
+export { 
+  app, 
+  auth, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  sendPasswordResetEmail,
+  updateProfile,
+  GoogleAuthProvider
+};
