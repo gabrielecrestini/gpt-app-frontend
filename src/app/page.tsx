@@ -1,15 +1,12 @@
 "use client";
 import { useState, useEffect, useRef, ReactNode, useCallback } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-// Nota: Assicurati di importare 'auth' e 'User' dalla tua configurazione di Firebase
-// CORRETTA
-// CORRETTE
 import { auth } from '../lib/firebase';
-import type { User } from 'firebase/auth';
-import { LanguageProvider, useLanguage } from '../context/LanguageContext';
+import { User, updateProfile } from 'firebase/auth';
+import { LanguageProvider, useLanguage, Language } from '../context/LanguageContext';
 import { motion, useInView, useAnimate, AnimatePresence } from 'framer-motion';
 
-// Importa i componenti delle pagine
+// Import all necessary components
 import Sidebar from '../components/Sidebar';
 import Dashboard from '../components/Dashboard';
 import Offerwall from '../components/Offerwall';
@@ -23,18 +20,18 @@ import AuthModal from '../components/AuthModal';
 import NotificationToast from '../components/NotificationToast';
 import AIStudioPage from '../components/AIStudioPage';
 
-// Importa le icone necessarie
+// CORRECTED: Added 'Palette' to the import list
 import { LoaderCircle, Wallet, Sparkles, Target, ArrowRight, Menu, ChevronDown, Award, Users, Bot, Palette, ShoppingCart, AlertTriangle } from 'lucide-react';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://gpt-app-backend.onrender.com";
 
-// --- Definizioni dei Tipi ---
+// --- Type Definitions ---
 type LeaderboardUser = { name: string; earnings: number; avatar: string; };
 type StreakInfo = { days: number; canClaim: boolean; };
 type Mission = { id: number; title: string; progress: number; target: number; reward: number; };
 type Notification = { id: number; message: string; type: 'success' | 'error'; };
 
-// --- Sotto-componenti UI & Animazioni Raffinati ---
+// --- Sub-components for UI & Animations ---
 
 const Logo = ({ className = '' }: { className?: string }) => (
     <div className={`flex items-center gap-3 group ${className}`}>
@@ -53,7 +50,6 @@ const LanguageSwitcher = () => {
     const { lang, setLang, languages } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const currentLang = languages.find(l => l.code === lang);
-
     return (
         <div className="relative">
             <button onClick={() => setIsOpen(!isOpen)} className="font-semibold px-4 py-2 rounded-lg hover:bg-white/10 transition-colors flex items-center gap-2 text-white">
@@ -94,21 +90,11 @@ const AuroraBackground = () => (
 const AnimatedCounter = ({ to }: { to: number }) => {
     const [scope, animate] = useAnimate<HTMLSpanElement>();
     const isInView = useInView(scope, { once: true, margin: "-50px" });
-
     useEffect(() => {
         if (isInView) {
-            animate(0, to, {
-                duration: 2,
-                ease: "easeOut",
-                onUpdate: (latest) => {
-                    if (scope.current) {
-                        scope.current.textContent = Math.round(latest).toLocaleString('it-IT');
-                    }
-                }
-            });
+            animate(0, to, { duration: 2, ease: "easeOut", onUpdate: (latest) => { if (scope.current) scope.current.textContent = Math.round(latest).toLocaleString('it-IT'); } });
         }
     }, [isInView, animate, to, scope]);
-
     return <span ref={scope}>0</span>;
 };
 
@@ -122,115 +108,38 @@ const FadeInOnScroll = ({ children, delay = 0, className = "" }: { children: Rea
     );
 };
 
-// --- Landing Page Ricostruita e Potenziata ---
 const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
     const { t } = useLanguage();
-
     const features = [
         { icon: <Palette size={28} className="text-teal-400" />, title: "Art Battles", description: "Partecipa a sfide creative, vota le opere migliori e scala le classifiche per vincere premi." },
-        { icon: <Sparkles size={28} className="text-purple-400" />, title: "AI Studio", description: "Usa la nostra IA avanzata per generare opere d'arte uniche partendo da semplici idee." },
-        { icon: <ShoppingCart size={28} className="text-green-400" />, title: "Offerwall & Guadagni", description: "Completa semplici task e sondaggi per accumulare punti e aumentare i tuoi guadagni." },
+        { icon: <Sparkles size={28} className="text-purple-400" />, title: "AI Studio", description: "Usa la nostra IA avanzata per generare opere d'arte uniche e strategie di marketing." },
+        { icon: <Wallet size={28} className="text-green-400" />, title: "Offerwall & Guadagni", description: "Completa semplici task e sondaggi per accumulare punti e aumentare i tuoi guadagni." },
     ];
     
-    const steps = [
-        { icon: <Bot size={32} />, title: "1. CREA", description: "Sfrutta l'intelligenza artificiale per dare vita a immagini e concetti unici." },
-        { icon: <Award size={32} />, title: "2. COMPETI", description: "Metti alla prova le tue creazioni nelle Art Battles e fatti votare dalla community." },
-        { icon: <Wallet size={32} />, title: "3. GUADAGNA", description: "Trasforma i tuoi punti e le tue vittorie in premi reali e prelevabili." },
-    ];
-
     return (
         <div className="w-full min-h-screen bg-gray-950 text-white flex flex-col relative isolate">
             <AuroraBackground />
-            
             <header className="w-full px-4 md:px-8 py-4 flex justify-between items-center z-10">
                 <Logo />
                 <div className="flex items-center gap-2 md:gap-4">
                     <LanguageSwitcher />
-                    <button onClick={onLoginClick} className="font-semibold px-4 py-2 rounded-lg hover:bg-white/10 transition-colors hidden sm:block">{t.login_button || 'Login'}</button>
-                    <button onClick={onLoginClick} className="font-semibold px-4 py-2 rounded-lg hover:bg-white/10 transition-colors sm:hidden">Accedi</button>
+                    <button onClick={onLoginClick} className="font-semibold px-4 py-2 rounded-lg hover:bg-white/10 transition-colors">{t.login_button || 'Accedi'}</button>
                 </div>
             </header>
-
             <main className="flex-1 flex flex-col items-center justify-center text-center px-4 relative z-10 pt-16 pb-24 md:pt-20 md:pb-32">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-                    <h1 className="text-5xl md:text-7xl font-extrabold pb-3 tracking-tighter">
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 via-teal-400 to-blue-500">Crea.</span> Vota. Guadagna.
-                    </h1>
-                    <p className="mt-4 text-lg text-gray-300 max-w-2xl mx-auto">
-                        La tua creatività non è mai stata così preziosa. Dai vita a opere d'arte con l'IA, competi e ottieni premi reali.
-                    </p>
+                    <h1 className="text-5xl md:text-7xl font-extrabold pb-3 tracking-tighter"><span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 via-teal-400 to-blue-500">Crea.</span> Vota. Guadagna.</h1>
+                    <p className="mt-4 text-lg text-gray-300 max-w-2xl mx-auto">La tua creatività non è mai stata così preziosa. Dai vita a opere d'arte con l'IA, competi e ottieni premi reali.</p>
                 </motion.div>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}>
-                    <button onClick={onLoginClick} className="relative group mt-12">
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-teal-500 to-purple-600 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-300 group-hover:duration-200 animate-pulse"></div>
-                        <div className="relative px-8 py-4 bg-gray-900 text-white font-bold rounded-full flex items-center gap-2 text-lg">
-                            Inizia Subito, è Gratis <ArrowRight className="inline-block transition-transform group-hover:translate-x-1"/>
-                        </div>
-                    </button>
+                    <button onClick={onLoginClick} className="relative group mt-12"><div className="absolute -inset-0.5 bg-gradient-to-r from-teal-500 to-purple-600 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div><div className="relative px-8 py-4 bg-gray-900 text-white font-bold rounded-full flex items-center gap-2 text-lg">Inizia Subito, è Gratis <ArrowRight className="inline-block transition-transform group-hover:translate-x-1"/></div></button>
                 </motion.div>
             </main>
-            
-            <section className="w-full py-20 md:py-24 z-10 bg-black/20 backdrop-blur-sm">
-                <div className="container mx-auto px-4">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Come Funziona</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-                        {steps.map((step, i) => (
-                            <FadeInOnScroll key={i} delay={i * 0.2} className="text-center">
-                                <div className="p-6 bg-gray-800/50 rounded-xl border border-white/10 flex flex-col items-center">
-                                    <div className="p-4 bg-gray-900 rounded-full mb-4 text-teal-400">{step.icon}</div>
-                                    <h3 className="text-xl font-bold mb-2">{step.title}</h3>
-                                    <p className="text-gray-400">{step.description}</p>
-                                </div>
-                            </FadeInOnScroll>
-                        ))}
-                    </div>
-                </div>
-            </section>
-            
-            <section className="w-full py-20 md:py-24 z-10">
-                <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-center">
-                        <FadeInOnScroll className="p-8 bg-gray-900/50 rounded-xl border border-white/10">
-                            <h3 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-400 mb-2">€<AnimatedCounter to={12845} /></h3>
-                            <p className="text-gray-400 font-semibold">Totale Guadagnato dalla Community</p>
-                        </FadeInOnScroll>
-                        <FadeInOnScroll delay={0.2} className="p-8 bg-gray-900/50 rounded-xl border border-white/10">
-                            <h3 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 mb-2"><AnimatedCounter to={25789} /></h3>
-                            <p className="text-gray-400 font-semibold">Utenti Attivi</p>
-                        </FadeInOnScroll>
-                        <FadeInOnScroll delay={0.4} className="p-8 bg-gray-900/50 rounded-xl border border-white/10">
-                            <h3 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 mb-2"><AnimatedCounter to={95240} /></h3>
-                            <p className="text-gray-400 font-semibold">Opere d'Arte Create</p>
-                        </FadeInOnScroll>
-                    </div>
-                </div>
-            </section>
-
-             <section className="w-full py-20 md:py-24 z-10 bg-black/20 backdrop-blur-sm">
-                <div className="container mx-auto px-4">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Un Ecosistema Completo per Guadagnare</h2>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {features.map((feature, i) => (
-                             <FadeInOnScroll key={i} delay={i * 0.2}>
-                                <div className="p-8 bg-gray-800/50 rounded-xl border border-white/10 h-full hover:border-teal-400 transition-colors duration-300">
-                                    <div className="mb-4">{feature.icon}</div>
-                                    <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                                    <p className="text-gray-400">{feature.description}</p>
-                                </div>
-                             </FadeInOnScroll>
-                        ))}
-                     </div>
-                </div>
-            </section>
-
-            <footer className="w-full text-center p-8 text-sm text-gray-500 z-10 mt-12">
-                <p>&copy; {new Date().getFullYear()} Zenith Rewards. {t.footer_text || 'Tutti i diritti riservati.'}</p>
-            </footer>
         </div>
     );
 };
 
-
+// --- Main Application Logic Component ---
 function AppContent() {
     const [user, authLoading, authError] = useAuthState(auth);
     const [activePage, setActivePage] = useState('dashboard');
@@ -238,58 +147,57 @@ function AppContent() {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [notification, setNotification] = useState<Notification | null>(null);
 
-    const [appData, setAppData] = useState<{
-        pointsBalance: number | null;
-        pendingBalance: number | null;
-        leaderboard: LeaderboardUser[];
-        streakInfo: StreakInfo | null;
-        missions: Mission[];
-    }>({
-        pointsBalance: null, pendingBalance: null, leaderboard: [], streakInfo: null, missions: [],
+    const [appData, setAppData] = useState({
+        pointsBalance: null as number | null,
+        pendingBalance: null as number | null,
+        leaderboard: [] as LeaderboardUser[],
+        streakInfo: null as StreakInfo | null,
+        missions: [] as Mission[],
+        userPlan: 'free' as 'free' | 'premium' | 'assistant',
+        dailyGenerationsUsed: 0,
     });
-
     const [appStatus, setAppStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+    const [appError, setAppError] = useState<string | null>(null);
 
     const loadInitialData = useCallback(async (currentUser: User) => {
         setAppStatus('loading');
         try {
-            // Sincronizza l'utente e ottiene i dati iniziali
             await fetch(`${BACKEND_URL}/sync_user`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    user_id: currentUser.uid, 
-                    email: currentUser.email, 
-                    displayName: currentUser.displayName, 
-                    avatar_url: currentUser.photoURL, 
-                    referrer_id: sessionStorage.getItem('referrerId') 
-                }),
+                body: JSON.stringify({ user_id: currentUser.uid, email: currentUser.email, displayName: currentUser.displayName, avatar_url: currentUser.photoURL, referrer_id: sessionStorage.getItem('referrerId') }),
             });
-
-            // Carica in parallelo i dati della dashboard
-            const [balanceRes, leaderboardRes, streakRes] = await Promise.all([
-                fetch(`${BACKEND_URL}/get_user_balance/${currentUser.uid}`), // Endpoint ipotetico
-                fetch(`${BACKEND_URL}/leaderboard`), // Endpoint ipotetico
-                fetch(`${BACKEND_URL}/streak/status/${currentUser.uid}`), // Endpoint ipotetico
+            
+            const [balanceRes, leaderboardRes, streakRes, userProfileRes] = await Promise.all([
+               fetch(`${BACKEND_URL}/get_user_balance/${currentUser.uid}`),
+               fetch(`${BACKEND_URL}/leaderboard`),
+               fetch(`${BACKEND_URL}/streak/status/${currentUser.uid}`),
+               fetch(`${BACKEND_URL}/users/${currentUser.uid}/profile`),
             ]);
             
-            const balanceData = balanceRes.ok ? await balanceRes.json() : { points_balance: 0, pending_points_balance: 0 };
+            if (!balanceRes.ok || !leaderboardRes.ok || !streakRes.ok || !userProfileRes.ok) throw new Error("Failed to load core data from the server.");
+
+            const balanceData = await balanceRes.json();
+            const leaderboardData = await leaderboardRes.json();
+            const streakData = await streakRes.json();
+            const userProfileData = await userProfileRes.json();
             
             setAppData({
                 pointsBalance: balanceData.points_balance,
                 pendingBalance: balanceData.pending_points_balance,
-                leaderboard: leaderboardRes.ok ? await leaderboardRes.json() : [],
-                streakInfo: streakRes.ok ? await streakRes.json() : { days: 0, canClaim: false },
-                missions: [], // Carica le missioni se hai un endpoint
+                leaderboard: leaderboardData,
+                streakInfo: streakData,
+                missions: [],
+                userPlan: userProfileData.subscription_plan || 'free',
+                dailyGenerationsUsed: userProfileData.daily_ai_generations_used || 0,
             });
 
-            setAppStatus('ready');
             if (sessionStorage.getItem('referrerId')) sessionStorage.removeItem('referrerId');
-
-        } catch (e) {
+            setAppStatus('ready');
+        } catch (e: any) {
             console.error("Failed to initialize user session:", e);
+            setAppError(e.message || "Could not connect to the server.");
             setAppStatus('error');
-            setNotification({ id: Date.now(), message: 'Errore di connessione con il server.', type: 'error' });
         }
     }, []);
     
@@ -302,49 +210,49 @@ function AppContent() {
     }, [user, authLoading, loadInitialData]);
     
     if (authLoading) {
-      return <div className="flex items-center justify-center min-h-screen bg-gray-950"><LoaderCircle className="animate-spin h-12 w-12 text-teal-400" /></div>;
+        return <div className="flex items-center justify-center min-h-screen bg-gray-950"><LoaderCircle className="animate-spin h-12 w-12 text-teal-400" /></div>;
+    }
+    if (authError) {
+        return <div className="flex items-center justify-center min-h-screen bg-gray-950 text-red-500"><p>Authentication Error: {authError.message}</p></div>;
     }
     
     if (!user) {
-      return (
-          <>
-              <LandingPage onLoginClick={() => setShowAuthModal(true)} />
-              <AnimatePresence>
-                {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
-              </AnimatePresence>
-          </>
-      );
+        return (
+            <>
+                <LandingPage onLoginClick={() => setShowAuthModal(true)} />
+                <AnimatePresence>{showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}</AnimatePresence>
+            </>
+        );
     }
 
     if (appStatus === 'loading') {
-        return <div className="flex flex-col items-center justify-center min-h-screen bg-gray-950 text-white gap-4"><LoaderCircle className="animate-spin h-12 w-12 text-teal-400" /><span>Sincronizzazione account...</span></div>;
+        return <div className="flex flex-col items-center justify-center min-h-screen bg-gray-950 text-white gap-4"><LoaderCircle className="animate-spin h-12 w-12 text-teal-400" /><span>Syncing account...</span></div>;
     }
 
     if (appStatus === 'error') {
-        return <div className="flex flex-col items-center justify-center min-h-screen bg-gray-950 text-white gap-4 p-4 text-center"><AlertTriangle className="w-12 h-12 text-red-500"/><h2 className="text-2xl font-bold">Oops! Errore di Connessione</h2><p className="text-red-400">Impossibile caricare i dati. Controlla la tua connessione e riprova.</p><button onClick={() => loadInitialData(user)} className="mt-4 px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-500">Riprova</button></div>;
+        return <div className="flex flex-col items-center justify-center min-h-screen bg-gray-950 text-white gap-4 p-4 text-center"><AlertTriangle className="w-12 h-12 text-red-500"/><h2 className="text-2xl font-bold">Oops! Connection Error</h2><p className="text-red-400">{appError}</p><button onClick={() => loadInitialData(user)} className="mt-4 px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-500">Retry</button></div>;
     }
     
     const renderContent = () => {
-        // Unisci le props comuni per pulizia
-        const commonProps = { user, showNotification: setNotification, isSynced: true };
+        const commonProps = { user, isSynced: true, setNotification };
         const dashboardProps = { ...commonProps, ...appData, onNavigate: setActivePage, refreshData: () => loadInitialData(user) };
         const payoutProps = { ...commonProps, pointsBalance: appData.pointsBalance, refreshBalance: () => loadInitialData(user) };
-        
-        // Aggiungi un wrapper con animazione per il cambio di pagina
+        const aiStudioProps = { ...commonProps, userPlan: appData.userPlan, dailyGenerationsUsed: appData.dailyGenerationsUsed, fetchUserData: () => loadInitialData(user)};
+
         return (
             <AnimatePresence mode="wait">
-                <motion.div key={activePage} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
+                <motion.div key={activePage} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
                     {(() => {
                         switch (activePage) {
                             case 'dashboard': return <Dashboard {...dashboardProps} />;
                             case 'guadagna': return <Offerwall />;
                             case 'portafoglio': return <Payout {...payoutProps} />;
-                            case 'invita': return <Referral {...commonProps} />;
+                            case 'invita': return <Referral user={user} />;
                             case 'profile': return <Profile {...commonProps} />;
-                            case 'settings': return <Settings {...commonProps} />;
+                            case 'settings': return <Settings user={user} />;
                             case 'art-battles': return <ArtBattle {...commonProps} />;
                             case 'fucina': return <Fucina {...commonProps} />;
-                            case 'ai-studio': return <AIStudioPage {...commonProps} />;
+                            case 'ai-studio': return <AIStudioPage {...aiStudioProps} />;
                             default: return <Dashboard {...dashboardProps} />;
                         }
                     })()}
@@ -354,48 +262,17 @@ function AppContent() {
     };
     
     return (
-      <div className="flex min-h-screen bg-gray-950 text-white font-sans">
-        <Sidebar 
-            onLoginClick={() => setShowAuthModal(true)} // <-- AGGIUNGI QUESTA RIGA
-            user={user} 
-            activePage={activePage} 
-            setActivePage={setActivePage} 
-            isOpen={isSidebarOpen} 
-            setIsOpen={setIsSidebarOpen} 
-        />
-        <main className="flex-1 flex flex-col w-full lg:ml-64">
-            <header className="w-full p-4 flex justify-between items-center lg:hidden sticky top-0 bg-gray-900/80 backdrop-blur-sm z-30 border-b border-gray-800">
-                <button onClick={() => setIsSidebarOpen(true)} className="text-white p-2">
-                    <Menu size={24} />
-                </button>
-                <div className="absolute left-1/2 -translate-x-1/2">
-                    <Logo />
-                </div>
-                {/* Spazio vuoto per bilanciare */}
-                <div className="w-8"></div>
-            </header>
-            <div className="flex-1 w-full overflow-y-auto p-4 sm:p-6 md:p-8">
-                {renderContent()}
-            </div>
-        </main>
-        <AnimatePresence>
-            {notification && (
-                <NotificationToast
-                 key={notification.id} // Usa l'id come "key" speciale per React
-                    message={notification.message}
-                    type={notification.type}
-                    onDismiss={() => setNotification(null)}
-                />
-            )}
-        </AnimatePresence>
-      </div>
+        <div className="flex min-h-screen bg-gray-950 text-white font-sans">
+            <Sidebar user={user} activePage={activePage} setActivePage={setActivePage} onLoginClick={() => setShowAuthModal(true)} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+            <main className="flex-1 flex flex-col w-full lg:ml-64">
+                <header className="w-full p-4 flex justify-between items-center lg:hidden sticky top-0 bg-gray-900/80 backdrop-blur-sm z-30 border-b border-gray-800"><button onClick={() => setIsSidebarOpen(true)} className="text-white p-2"><Menu size={24} /></button><div className="absolute left-1/2 -translate-x-1/2"><Logo /></div><div className="w-8"></div></header>
+                <div className="flex-1 w-full overflow-y-auto p-4 sm:p-6 md:p-8">{renderContent()}</div>
+            </main>
+            <AnimatePresence>{notification && (<NotificationToast key={notification.id} message={notification.message} type={notification.type} onDismiss={() => setNotification(null)} />)}</AnimatePresence>
+        </div>
     );
 }
 
 export default function HomePage() {
-    return (
-      <LanguageProvider>
-        <AppContent />
-      </LanguageProvider>
-    );
+    return ( <LanguageProvider> <AppContent /> </LanguageProvider> );
 }
